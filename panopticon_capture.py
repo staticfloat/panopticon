@@ -43,7 +43,12 @@ for ip, name in config['cameras'].iteritems():
                 f.write(r.content)
             
             # Next, copy it to the `live` directory
-            shutil.copyfile(pic_path, os.path.join(livedir, f"{name}.jpg")
+            live_pic_path = os.path.join(livedir, f"{name}.jpg")
+            shutil.copyfile(pic_path, live_pic_path)
+
+            # Next, spawn off `ffmpeg` to resize it to a "small" variant
+            live_small_path = os.path.join(livedir, f"{name}-small.jpg")
+            os.system(f"ffmpeg -i {live_pic_path} -vf scale=iw/5:-1 -q:v 5 {live_small_path}")
         else:
             print(r.content)
     except:
