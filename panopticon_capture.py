@@ -23,7 +23,7 @@ now = datetime.datetime.now()
 minute = now.hour*60 + now.minute
 
 # Iterate over our cameras, 
-for ip, name in config['cameras'].iteritems():
+for ip, name in config['cameras'].items():
     # Ensure that we have a `pics/{name}` directory to store historical data within
     camdir = os.path.join(script_dir, "pics", name)
     os.makedirs(camdir, exist_ok=True)
