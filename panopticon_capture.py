@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import requests, os, datetime, shutil
+import requests, os, datetime, shutil, subprocess
 from requests.auth import HTTPDigestAuth
 
 # The directory that contains this script
@@ -10,6 +10,8 @@ exec(open(os.path.join(script_dir, "config", "config.py")).read())
 cameras = config['cameras']
 camera_auth = HTTPDigestAuth(config['camera_auth']['username'], config['camera_auth']['password'])
 rsync_dest = config['rsync_dest']
+resolution_divisor = config['small_quality']['resolution_divisor']
+jpeg_quality = config['small_quality']['jpeg_quality']
 
 # Ensure the `live` directory exists
 livedir = os.path.join(script_dir, "pics", "live")
@@ -21,6 +23,8 @@ os.makedirs(livedir, exist_ok=True)
 # the `{name}.jpg` file with that one, then upload it.
 now = datetime.datetime.now()
 minute = now.hour*60 + now.minute
+
+background_processes = []
 
 # Iterate over our cameras, 
 for ip, name in config['cameras'].items():
@@ -48,11 +52,15 @@ for ip, name in config['cameras'].items():
 
             # Next, spawn off `ffmpeg` to resize it to a "small" variant
             live_small_path = os.path.join(livedir, f"{name}-small.jpg")
-            os.system(f"ffmpeg -i {live_pic_path} -vf scale=iw/5:-1 -q:v 5 {live_small_path}")
+            background_processes += [subprocess.Popen(f"ffmpeg -i {live_pic_path} -vf scale=iw/{resolution_divisor}:-1 -q:v {jpeg_quality} {live_small_path}", shell=True)]            
         else:
             print(r.content)
     except:
         print('Something went wrong!')
+
+# Wait for all the background processes to finish:
+for p in background_processes:
+    p.wait()
 
 # Write the `live` directory up
 print("Uploading to %s"%(rsync_dest))
