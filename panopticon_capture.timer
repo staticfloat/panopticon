@@ -1,0 +1,9 @@
+[Unit]
+Description=Panopticon image capture
+
+[Timer]
+# Run on the minute, every minute
+OnCalendar="*-*-* *:*:01"
+
+[Install]
+WantedBy=timers.target
