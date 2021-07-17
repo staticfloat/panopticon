@@ -6,7 +6,7 @@ from requests.auth import HTTPDigestAuth
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
 # Load our config object
-config = exec(open(os.path.join(script_dir, "config", "config.py")).read())
+exec(open(os.path.join(script_dir, "config", "config.py")).read())
 cameras = config['cameras']
 camera_auth = HTTPDigestAuth(config['camera_auth']['username'], config['camera_auth']['password'])
 rsync_dest = config['rsync_dest']
