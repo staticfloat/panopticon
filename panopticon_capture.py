@@ -33,7 +33,7 @@ for ip, name in config['cameras'].items():
     os.makedirs(camdir, exist_ok=True)
 
     try:
-        pic_path = os.path.join(script_dir, "pics", name, f"{minute}.jpg")
+        pic_path = os.path.join(script_dir, "pics", name, f"{minute:04}.jpg")
         print(f"Fetching {pic_path}")
         r = requests.get(
             f"http://{ip}/cgi-bin/snapshot.cgi",
