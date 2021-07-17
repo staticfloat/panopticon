@@ -52,7 +52,7 @@ for ip, name in config['cameras'].items():
 
             # Next, spawn off `ffmpeg` to resize it to a "small" variant
             live_small_path = os.path.join(livedir, f"{name}-small.jpg")
-            background_processes += [subprocess.Popen(f"ffmpeg -y -i {live_pic_path} -vf scale=iw/{resolution_divisor}:-1 -q:v {jpeg_quality} {live_small_path}", shell=True)]            
+            background_processes += [subprocess.Popen(f"ffmpeg -y -hide_banner -loglevel error -i {live_pic_path} -vf scale=iw/{resolution_divisor}:-1 -q:v {jpeg_quality} {live_small_path}", shell=True)]            
         else:
             print(r.content)
     except:
