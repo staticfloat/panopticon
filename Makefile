@@ -32,15 +32,21 @@ $(SRCDIR)/dist/bin/ffmpeg:
 	@curl -# -fL "$(FFMPEG_URL)" | tar -C $(SRCDIR)/dist/bin -Jx --strip-components=1 --wildcards "ffmpeg-*-armhf-static/ffmpeg"
 install: $(SRCDIR)/dist/bin/ffmpeg
 
-# Install rules for `systemd` service
-$(HOME)/.config/systemd/user/panopticon_capture.service: panopticon_capture.service
-	SRCDIR="$(SRCDIR)" PYTHON="$(shell which python3)" envsubst < "$<" > "$@"
-install: $(HOME)/.config/systemd/user/panopticon_capture.service
+# Install rules for `systemd` services/timers
+define install_systemd_files
+# Install `.service`
+$(HOME)/.config/systemd/user/$(1).service: $(1).service
+	SRCDIR="$(SRCDIR)" PYTHON="$(shell which python3)" envsubst < "$$<" > "$$@"
+install: $(HOME)/.config/systemd/user/$(1).service
 
-# Install rules for `systemd` timer
-$(HOME)/.config/systemd/user/panopticon_capture.timer: panopticon_capture.timer
-	cp "$<" "$@"
-install: $(HOME)/.config/systemd/user/panopticon_capture.timer
+# Install `.timer`
+$(HOME)/.config/systemd/user/$(1).timer: $(1).timer
+	cp "$$<" "$$@"
+install: $(HOME)/.config/systemd/user/$(1).timer
+endef
+
+$(eval $(call install_systemd_files,panopticon_capture))
+$(eval $(call install_systemd_files,panopticon_encode))
 
 
 install:
