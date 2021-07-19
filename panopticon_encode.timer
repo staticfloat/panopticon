@@ -1,0 +1,9 @@
+[Unit]
+Description=Panopticon video encode timer
+
+[Timer]
+# Run on the hour, every hour
+OnCalendar=*-*-* *:00:00
+
+[Install]
+WantedBy=timers.target

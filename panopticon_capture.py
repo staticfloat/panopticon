@@ -4,6 +4,7 @@ from requests.auth import HTTPDigestAuth
 
 # The directory that contains this script
 script_dir = os.path.dirname(os.path.realpath(__file__))
+ffmpeg = os.path.join(script_dir, "dist", "bin", "ffmpeg")
 
 # Load our config object
 exec(open(os.path.join(script_dir, "config", "config.py")).read())
@@ -26,7 +27,7 @@ minute = now.hour*60 + now.minute
 
 background_processes = []
 
-# Iterate over our cameras, 
+# Iterate over our cameras
 for ip, name in config['cameras'].items():
     # Ensure that we have a `pics/{name}` directory to store historical data within
     camdir = os.path.join(script_dir, "pics", name)
@@ -52,7 +53,7 @@ for ip, name in config['cameras'].items():
 
             # Next, spawn off `ffmpeg` to resize it to a "small" variant
             live_small_path = os.path.join(livedir, f"{name}-small.jpg")
-            background_processes += [subprocess.Popen(f"ffmpeg -y -hide_banner -loglevel error -i {live_pic_path} -vf scale=iw/{resolution_divisor}:-1 -q:v {jpeg_quality} {live_small_path}", shell=True)]            
+            background_processes += [subprocess.Popen(f"{ffmpeg} -y -hide_banner -loglevel error -i {live_pic_path} -vf scale=iw/{resolution_divisor}:-1 -q:v {jpeg_quality} {live_small_path}", shell=True)]            
         else:
             print(r.content)
     except:

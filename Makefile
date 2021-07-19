@@ -10,7 +10,6 @@ $$(error "Must install $(1)!")
 endif
 endef
 
-$(eval $(call check_program_installed,ffmpeg))
 $(eval $(call check_program_installed,python3))
 $(eval $(call check_program_installed,rsync))
 $(eval $(call check_program_installed,envsubst))
@@ -26,6 +25,11 @@ endef
 $(eval $(call check_file_exists,config/id_rsa))
 $(eval $(call check_file_exists,config/config.py))
 
+# Install rules for static `ffmpeg` executable
+$(SRCDIR)/dist/bin/ffmpeg:
+	@mkdir -p $(SRCDIR)/dist/bin
+	@curl -# -fL "$(FFMPEG_URL)" | tar -C $(SRCDIR)/dist/bin -Jx --strip-components=1 --wildcards "ffmpeg-*-armhf-static/ffmpeg"
+install: $(SRCDIR)/dist/bin/ffmpeg
 
 # Install rules for `systemd` service
 $(HOME)/.config/systemd/user/panopticon_capture.service: panopticon_capture.service

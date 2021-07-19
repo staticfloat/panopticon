@@ -1,0 +1,10 @@
+[Unit]
+Description=Panopticon video encoder
+
+[Service]
+Type=oneshot
+ExecStart=${PYTHON} ${SRCDIR}/panopticon_encode.py
+WorkingDirectory=${SRCDIR}
+
+# If we take more than 300s to run, consider it failed
+TimeoutStartSec=300
