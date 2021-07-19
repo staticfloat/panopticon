@@ -19,7 +19,7 @@ for ip, name in config['cameras'].items():
 
     # Convert the past hour's worth of pictures
     print(f"Encoding last hour of {name}")
-    os.system(f"{ffmpeg} -y -hide_banner -loglevel error -r 24 -f image2 -start_number {last_hour*60} -i {camdir}/%4d.jpg -frames:v 60 -vf scale=iw/{resolution_divisor}:-1 -c:v libx264 -preset fast -crf 23 {camdir}/hour-{last_hour}.mp4")
+    os.system(f"{ffmpeg} -y -hide_banner -loglevel error -r 24 -f image2 -start_number {last_hour*60} -i {camdir}/%4d.jpg -frames:v 60 -vf scale=iw/{resolution_divisor}:-1 -c:v libx264 -preset fast -crf 23 {camdir}/hour-{last_hour:02}.mp4")
 
     # Concatenate all the hours together to get a "last 24 hours" video
     with tempfile.NamedTemporaryFile(mode='w') as file_list:
@@ -27,7 +27,7 @@ for ip, name in config['cameras'].items():
         hours = [i for i in range(24)]
         hours = hours[(last_hour+1)%24:] + hours[:(last_hour+1)%24]
         for hour_idx in hours:
-            file_list.write(f"file '{camdir}/hour-{hour_idx}.mp4'\n")
+            file_list.write(f"file '{camdir}/hour-{hour_idx:02}.mp4'\n")
             file_list.flush()
 
         # Concatenate these hourly videos into a daily video

@@ -6,5 +6,5 @@ Type=oneshot
 ExecStart=${PYTHON} ${SRCDIR}/panopticon_capture.py
 WorkingDirectory=${SRCDIR}
 
-# If we take more than 50s to run, consider it failed
-TimeoutStartSec=50
+# If we take more than 90s to run, consider it failed
+TimeoutStartSec=90
