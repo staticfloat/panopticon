@@ -26,6 +26,7 @@ $(eval $(call check_file_exists,config/id_rsa))
 $(eval $(call check_file_exists,config/config.py))
 
 # Install rules for static `ffmpeg` executable
+FFMPEG_URL="https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-armhf-static.tar.xz"
 $(SRCDIR)/dist/bin/ffmpeg:
 	@mkdir -p $(SRCDIR)/dist/bin
 	@curl -# -fL "$(FFMPEG_URL)" | tar -C $(SRCDIR)/dist/bin -Jx --strip-components=1 --wildcards "ffmpeg-*-armhf-static/ffmpeg"
