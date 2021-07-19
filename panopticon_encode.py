@@ -27,7 +27,7 @@ for ip, name in config['cameras'].items():
         hours = [i for i in range(24)]
         hours = hours[(last_hour+1)%24:] + hours[:(last_hour+1)%24]
         for hour_idx in hours:
-            file_list.write(f"{camdir}/hour-{hour_idx}.mp4\n")
+            file_list.write(f"file '{camdir}/hour-{hour_idx}.mp4'\n")
             file_list.flush()
 
         # Concatenate these hourly videos into a daily video
