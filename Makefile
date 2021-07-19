@@ -32,6 +32,10 @@ $(SRCDIR)/dist/bin/ffmpeg:
 	@curl -# -fL "$(FFMPEG_URL)" | tar -C $(SRCDIR)/dist/bin -Jx --strip-components=1 --wildcards "ffmpeg-*-armhf-static/ffmpeg"
 install: $(SRCDIR)/dist/bin/ffmpeg
 
+# Overall systemd-reload rule
+systemd-reload:
+	systemctl --user daemon-reload
+
 # Install rules for `systemd` services/timers
 define install_systemd_files
 # Install `.service`
@@ -43,14 +47,12 @@ install: $(HOME)/.config/systemd/user/$(1).service
 $(HOME)/.config/systemd/user/$(1).timer: $(1).timer
 	cp "$$<" "$$@"
 install: $(HOME)/.config/systemd/user/$(1).timer
+
+enable-$(1): $(HOME)/.config/systemd/user/$(1).timer $(HOME)/.config/systemd/user/$(1).service | systemd-reload
+	systemctl --user enable $(1).timer
+	systemctl --user start $(1).timer
+install: enable-$(1)
 endef
 
 $(eval $(call install_systemd_files,panopticon_capture))
 $(eval $(call install_systemd_files,panopticon_encode))
-
-
-install:
-	# Tell systemctl to start the `panopticon`.
-	systemctl --user daemon-reload
-	systemctl --user enable panopticon_capture.timer
-	systemctl --user start panopticon_capture.timer
