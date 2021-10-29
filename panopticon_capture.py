@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import requests, os, datetime, shutil, subprocess
+import requests, os, datetime, shutil, subprocess, sys, traceback
 from requests.auth import HTTPDigestAuth
 
 # The directory that contains this script
@@ -13,6 +13,17 @@ camera_auth = HTTPDigestAuth(config['camera_auth']['username'], config['camera_a
 rsync_dest = config['rsync_dest']
 resolution_divisor = config['small_quality']['resolution_divisor']
 jpeg_quality = config['small_quality']['jpeg_quality']
+crop = config.get('crop_amount', None)
+
+filters = []
+if crop is not None:
+    x = crop["start_x"]
+    y = crop["start_y"]
+    w = crop["width"]
+    h = crop["height"]
+    filters += [f"\"crop=x={x}:y={y}:w={w}:h={h}\""]
+
+ffmpeg_common_args = "-y -hide_banner -loglevel error"
 
 # Ensure the `live` directory exists
 livedir = os.path.join(script_dir, "pics", "live")
@@ -36,28 +47,33 @@ for ip, name in config['cameras'].items():
     try:
         pic_path = os.path.join(script_dir, "pics", name, f"{minute:04}.jpg")
         print(f"Fetching {pic_path}")
+        sys.stdout.flush()
         r = requests.get(
             f"http://{ip}/cgi-bin/snapshot.cgi",
             params={'channel':'1', 'subtype': '0'},
             auth=camera_auth,
         )
         print(f"HTTP {r.status_code}")
+        sys.stdout.flush()
         if r.status_code == 200:
             # If it was successful, write it out to the appropriate minute-file
             with open(pic_path, 'wb') as f:
                 f.write(r.content)
-            
-            # Next, copy it to the `live` directory
+
+            # use ffmpeg to write it out
             live_pic_path = os.path.join(livedir, f"{name}.jpg")
-            shutil.copyfile(pic_path, live_pic_path)
+            filters_str = ",".join(filters)
+            background_processes += [subprocess.Popen(f"{ffmpeg} {ffmpeg_common_args} -i {pic_path} -vf {filters_str} -q:v {jpeg_quality} {live_pic_path}", shell=True)]
 
             # Next, spawn off `ffmpeg` to resize it to a "small" variant
             live_small_path = os.path.join(livedir, f"{name}-small.jpg")
-            background_processes += [subprocess.Popen(f"{ffmpeg} -y -hide_banner -loglevel error -i {live_pic_path} -vf scale=iw/{resolution_divisor}:-1 -q:v {jpeg_quality} {live_small_path}", shell=True)]            
+            filters_str = ",".join(filters + [f"scale=iw/{resolution_divisor}:-1"])
+            background_processes += [subprocess.Popen(f"{ffmpeg} {ffmpeg_common_args} -i {pic_path} -vf {filters_str} -q:v {jpeg_quality} {live_small_path}", shell=True)]
         else:
             print(r.content)
     except:
-        print('Something went wrong!')
+        traceback.print_exc()
+sys.stdout.flush()
 
 # Wait for all the background processes to finish:
 for p in background_processes:
@@ -65,5 +81,6 @@ for p in background_processes:
 
 # Write the `live` directory up
 print("Uploading to %s"%(rsync_dest))
+sys.stdout.flush()
 ssh_key = os.path.join(script_dir, "config", "id_rsa")
 os.system(f"rsync -e 'ssh -i {ssh_key}' -Pav {livedir}/* {rsync_dest}")
