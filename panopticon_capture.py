@@ -29,12 +29,12 @@ ffmpeg_common_args = "-y -hide_banner -loglevel error"
 livedir = os.path.join(script_dir, "pics", "live")
 os.makedirs(livedir, exist_ok=True)
 
-# We're going to name our pictures as `pics/{name}/{minute}.jpg`, where `minute`
-# counts from `0` to `1440` (the number of minutes in a 24 hour day)
+# We're going to name our pictures as `pics/{name}/{pic_idx}.jpg`, where `pic_idx`
+# counts from `0` to `2880` (the number of 30s-intervals in a 24 hour day)
 # We will also take the latest one (the one we just wrote out) and overwrite
 # the `{name}.jpg` file with that one, then upload it.
 now = datetime.datetime.now()
-minute = now.hour*60 + now.minute
+pic_idx = now.hour*30 + now.minute
 
 background_processes = []
 
@@ -45,7 +45,7 @@ for ip, name in config['cameras'].items():
     os.makedirs(camdir, exist_ok=True)
 
     try:
-        pic_path = os.path.join(script_dir, "pics", name, f"{minute:04}.jpg")
+        pic_path = os.path.join(script_dir, "pics", name, f"{pic_idx:04}.jpg")
         print(f"Fetching {pic_path}")
         sys.stdout.flush()
         r = requests.get(

@@ -2,8 +2,8 @@
 Description=Panopticon image capture
 
 [Timer]
-# Run on the minute, every minute
-OnCalendar=*-*-* *:*:00
+# Run twice per minute, every minute
+OnCalendar=*-*-* *:*:00,30
 
 [Install]
 WantedBy=timers.target
