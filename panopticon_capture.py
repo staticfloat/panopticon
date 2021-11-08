@@ -57,18 +57,18 @@ for ip, name in config['cameras'].items():
         sys.stdout.flush()
         if r.status_code == 200:
             # If it was successful, write it out to the appropriate minute-file
-            with open(pic_path, 'wb') as f:
-                f.write(r.content)
+            # We do our cropping here, once.
+            filters_str = ",".join(filters)
+            p = subprocess.Popen(f"{ffmpeg} {ffmpeg_common_args} -i pipe: -vf {filters_str} -q:v 6 {pic_path}", stdin=subprocess.PIPE, shell=True)
+            p.communicate(input=r.content)
 
             # use ffmpeg to write it out
             live_pic_path = os.path.join(livedir, f"{name}.jpg")
-            filters_str = ",".join(filters)
-            background_processes += [subprocess.Popen(f"{ffmpeg} {ffmpeg_common_args} -i {pic_path} -vf {filters_str} -q:v {jpeg_quality} {live_pic_path}", shell=True)]
+            background_processes += [subprocess.Popen(f"{ffmpeg} {ffmpeg_common_args} -i {pic_path} -q:v {jpeg_quality} {live_pic_path}", shell=True)]
 
             # Next, spawn off `ffmpeg` to resize it to a "small" variant
             live_small_path = os.path.join(livedir, f"{name}-small.jpg")
-            filters_str = ",".join(filters + [f"scale=iw/{resolution_divisor}:-1"])
-            background_processes += [subprocess.Popen(f"{ffmpeg} {ffmpeg_common_args} -i {pic_path} -vf {filters_str} -q:v {jpeg_quality} {live_small_path}", shell=True)]
+            background_processes += [subprocess.Popen(f"{ffmpeg} {ffmpeg_common_args} -i {pic_path} -vf scale=iw/{resolution_divisor}:-1 -q:v {jpeg_quality} {live_small_path}", shell=True)]
         else:
             print(r.content)
     except:
