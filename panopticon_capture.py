@@ -34,7 +34,7 @@ os.makedirs(livedir, exist_ok=True)
 # We will also take the latest one (the one we just wrote out) and overwrite
 # the `{name}.jpg` file with that one, then upload it.
 now = datetime.datetime.now()
-pic_idx = now.hour*30 + now.minute
+pic_idx = now.hour*120 + now.minute*2 + now.second//30
 
 background_processes = []
 
