@@ -58,8 +58,10 @@ for ip, name in config['cameras'].items():
         if r.status_code == 200:
             # If it was successful, write it out to the appropriate minute-file
             # We do our cropping here, once.
-            filters_str = ",".join(filters)
-            p = subprocess.Popen(f"{ffmpeg} {ffmpeg_common_args} -i pipe: -vf {filters_str} -q:v 6 {pic_path}", stdin=subprocess.PIPE, shell=True)
+            filters_str = ""
+            if filters:
+                filters_str = "-vf " + ",".join(filters)
+            p = subprocess.Popen(f"{ffmpeg} {ffmpeg_common_args} -i pipe: {filters_str} -q:v 6 {pic_path}", stdin=subprocess.PIPE, shell=True)
             p.communicate(input=r.content)
 
             # use ffmpeg to write it out
