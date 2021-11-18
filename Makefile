@@ -44,6 +44,7 @@ $(HOME)/.config/systemd/user/$(1).service: $(1).service
 install: $(HOME)/.config/systemd/user/$(1).service
 
 # Install `.timer`
+ifneq (,$(wildcard $(1).timer))
 $(HOME)/.config/systemd/user/$(1).timer: $(1).timer
 	cp "$$<" "$$@"
 install: $(HOME)/.config/systemd/user/$(1).timer
@@ -52,7 +53,9 @@ enable-$(1): $(HOME)/.config/systemd/user/$(1).timer $(HOME)/.config/systemd/use
 	systemctl --user enable $(1).timer
 	systemctl --user start $(1).timer
 install: enable-$(1)
+endif
 endef
 
 $(eval $(call install_systemd_files,panopticon_capture))
 $(eval $(call install_systemd_files,panopticon_encode))
+$(eval $(call install_systemd_files,panopticon_upload))
