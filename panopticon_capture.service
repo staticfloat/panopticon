@@ -7,4 +7,4 @@ ExecStart=${PYTHON} ${SRCDIR}/panopticon_capture.py
 WorkingDirectory=${SRCDIR}
 
 # If we take more than 45s to run, consider it failed
-RuntimeMaxSec=45
+#RuntimeMaxSec=45

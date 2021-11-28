@@ -7,4 +7,4 @@ ExecStart=${PYTHON} ${SRCDIR}/panopticon_upload.py
 WorkingDirectory=${SRCDIR}
 
 # If we take more than 5m to run, kill it
-RuntimeMaxSec=300
+#RuntimeMaxSec=300

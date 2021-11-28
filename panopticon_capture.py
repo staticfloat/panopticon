@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import requests, os, datetime, shutil, subprocess, sys, traceback
+import requests, os, datetime, shutil, subprocess, sys, traceback, time
 from requests.auth import HTTPDigestAuth
 
 # The directory that contains this script
@@ -38,6 +38,27 @@ pic_idx = now.hour*120 + now.minute*2 + now.second//30
 
 background_processes = []
 
+def download_pic(ip, pic_path):
+    print(f"Fetching {pic_path}")
+    sys.stdout.flush()
+    for request_idx in range(3):
+        try:
+            r = requests.get(
+                f"http://{ip}/cgi-bin/snapshot.cgi",
+                params={'channel':'1', 'subtype': '0'},
+                auth=camera_auth,
+            )
+            break
+        except:
+            print("Download failed, retrying...")
+            traceback.print_exc()
+            time.sleep(1)
+
+    print(f"HTTP {r.status_code}")
+    sys.stdout.flush()
+    return r
+
+
 # Iterate over our cameras
 for ip, name in config['cameras'].items():
     # Ensure that we have a `pics/{name}` directory to store historical data within
@@ -46,15 +67,7 @@ for ip, name in config['cameras'].items():
 
     try:
         pic_path = os.path.join(script_dir, "pics", name, f"{pic_idx:04}.jpg")
-        print(f"Fetching {pic_path}")
-        sys.stdout.flush()
-        r = requests.get(
-            f"http://{ip}/cgi-bin/snapshot.cgi",
-            params={'channel':'1', 'subtype': '0'},
-            auth=camera_auth,
-        )
-        print(f"HTTP {r.status_code}")
-        sys.stdout.flush()
+        r = download_pic(ip, pic_path)
         if r.status_code == 200:
             # If it was successful, write it out to the appropriate minute-file
             # We do our cropping here, once.
@@ -85,4 +98,4 @@ for p in background_processes:
 print("Uploading to %s"%(rsync_dest))
 sys.stdout.flush()
 ssh_key = os.path.join(script_dir, "config", "id_rsa")
-os.system(f"rsync -e 'ssh -i {ssh_key}' -Pav {livedir}/* {rsync_dest}")
+os.system(f"rsync -e 'ssh -i {ssh_key}' -a {livedir}/* {rsync_dest}")
