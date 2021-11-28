@@ -41,21 +41,20 @@ background_processes = []
 def download_pic(ip, pic_path):
     print(f"Fetching {pic_path}")
     sys.stdout.flush()
-    for request_idx in range(3):
-        try:
-            r = requests.get(
-                f"http://{ip}/cgi-bin/snapshot.cgi",
-                params={'channel':'1', 'subtype': '0'},
-                auth=camera_auth,
-            )
+    for request_idx in range(5):
+        url = f"http://{ip}/cgi-bin/snapshot.cgi"
+        r = requests.get(
+            url,
+            params={'channel':'1', 'subtype': '0'},
+            auth=camera_auth,
+        )
+        print(f"{url} -> HTTP {r.status_code}")
+        if r.status_code == 200:
             break
-        except:
-            print("Download failed, retrying...")
-            traceback.print_exc()
-            time.sleep(1)
-
-    print(f"HTTP {r.status_code}")
-    sys.stdout.flush()
+        print("Download failed, retrying...")
+        print(r.content)
+        sys.stdout.flush()
+        time.sleep(1)
     return r
 
 
@@ -84,8 +83,6 @@ for ip, name in config['cameras'].items():
             # Next, spawn off `ffmpeg` to resize it to a "small" variant
             live_small_path = os.path.join(livedir, f"{name}-small.jpg")
             background_processes += [subprocess.Popen(f"{ffmpeg} {ffmpeg_common_args} -i {pic_path} -vf scale=iw/{resolution_divisor}:-1 -q:v {jpeg_quality} {live_small_path}", shell=True)]
-        else:
-            print(r.content)
     except:
         traceback.print_exc()
 sys.stdout.flush()
