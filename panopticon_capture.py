@@ -42,19 +42,23 @@ def download_pic(ip, pic_path):
     print(f"Fetching {pic_path}")
     sys.stdout.flush()
     for request_idx in range(15):
-        url = f"http://{ip}/cgi-bin/snapshot.cgi"
-        r = requests.get(
-            url,
-            params={'channel':'1', 'subtype': '0'},
-            auth=camera_auth,
-        )
-        print(f"{url} -> HTTP {r.status_code}")
-        if r.status_code == 200:
-            break
-        print("Download failed, retrying...")
-        print(r.content)
-        sys.stdout.flush()
-        time.sleep(1)
+        try:
+            url = f"http://{ip}/cgi-bin/snapshot.cgi"
+            r = requests.get(
+                url,
+                params={'channel':'1', 'subtype': '0'},
+                auth=camera_auth,
+                timeout=3,
+            )
+            print(f"{url} -> HTTP {r.status_code}")
+            if r.status_code == 200:
+                break
+            raise Exception()
+        except:
+            print("Download failed, retrying...")
+            print(r.content)
+            sys.stdout.flush()
+            time.sleep(1)
     return r
 
 
