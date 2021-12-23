@@ -41,7 +41,7 @@ background_processes = []
 def download_pic(ip, pic_path):
     print(f"Fetching {pic_path}")
     sys.stdout.flush()
-    for request_idx in range(5):
+    for request_idx in range(15):
         url = f"http://{ip}/cgi-bin/snapshot.cgi"
         r = requests.get(
             url,
