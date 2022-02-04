@@ -35,12 +35,14 @@ os.makedirs(livedir, exist_ok=True)
 # the `{name}.jpg` file with that one, then upload it.
 now = datetime.datetime.now()
 pic_idx = now.hour*120 + now.minute*2 + now.second//30
+last_pic_idx = (pic_idx - 1)%(60*24*2)
 
 background_processes = []
 
 def download_pic(ip, pic_path):
     print(f"Fetching {pic_path}")
     sys.stdout.flush()
+    r = None
     for request_idx in range(15):
         try:
             url = f"http://{ip}/cgi-bin/snapshot.cgi"
@@ -88,6 +90,9 @@ for ip, name in config['cameras'].items():
             live_small_path = os.path.join(livedir, f"{name}-small.jpg")
             background_processes += [subprocess.Popen(f"{ffmpeg} {ffmpeg_common_args} -i {pic_path} -vf scale=iw/{resolution_divisor}:-1 -q:v {jpeg_quality} {live_small_path}", shell=True)]
     except:
+        print(f"Fetching of {name} from {ip} failed, copying last image!")
+        last_pic_path = os.path.join(script_dir, "pics", name, f"{last_pic_idx:04}.jpg")
+        shutil.copyfile(last_pic_path, pic_path)
         traceback.print_exc()
 sys.stdout.flush()
 
