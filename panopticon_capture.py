@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import requests, os, datetime, shutil, subprocess, sys, traceback, time
+from PIL import Image, ImageFont, ImageDraw
+from io import BytesIO
 from requests.auth import HTTPDigestAuth
 
 # The directory that contains this script
@@ -14,6 +16,7 @@ rsync_dest = config['rsync_dest']
 resolution_divisor = config['small_quality']['resolution_divisor']
 jpeg_quality = config['small_quality']['jpeg_quality']
 crop = config.get('crop_amount', None)
+weather = config.get('weather', None)
 
 filters = []
 if crop is not None:
@@ -63,6 +66,69 @@ def download_pic(ip, pic_path):
             time.sleep(1)
     return r
 
+def get_weather_data():
+    print(f"Fetching weather data...")
+    sys.stdout.flush()
+    r = None
+    for request_idx in range(3):
+        try:
+            r = requests.get(
+                "https://api.openweathermap.org/data/2.5/weather",
+                params={
+                    # The ranch, as measured by Elliot on Google Maps
+                    'lon': '-116.669098',
+                    'lat': '32.563139',
+                    # Elliot's openweather API key
+                    'appid': '688d18df8179a6630f40bf04bae931d2',
+                    # METRIC SUPERIORITY!!!!
+                    'units': 'imperial',
+                },
+            )
+            if r.status_code == 200:
+                break
+            raise Exception()
+        except:
+            print("Weather fetch failed, retrying...")
+            print(r.content)
+            sys.stdout.flush()
+            time.sleep(1)
+    return r
+
+def add_weather_text(img_data, weather_str):
+    img = Image.open(img_data)
+    draw = ImageDraw.Draw(img)
+    text_width, text_height = draw.textsize(weather_str, font=font)
+    img_width = img.size[0]
+    img_height = img.size[1]
+    img_width_off = 0
+    img_height_off = 0
+    if crop is not None:
+        img_width = crop["width"]
+        img_height = crop["height"]
+        img_width_off = crop["start_x"]
+        img_height_off = crop["start_y"]
+
+    draw.text(
+        (img_width/2 - text_width/2 + img_width_off, img_height - text_height + img_height_off),
+        weather_str,
+        fill=(255,255,255),
+        font=font,
+    )
+    img_byte_arr = BytesIO()
+    img.save(img_byte_arr, format='JPEG')
+    return img_byte_arr.getbuffer()
+
+# If weather info is set up, fetch it and add in!
+if weather is not None:
+    font_size = weather.get('font_size', 60)
+    font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size)
+
+    weather_data = get_weather_data()
+    if weather_data.status_code == 200:
+        weather_data = weather_data.json()
+        weather_str = f"""{weather_data["main"]["temp"]:.1f}°  {weather_data["wind"]["speed"]:.2f} mph @ {weather_data["wind"]["deg"]}°  {weather_data["main"]["humidity"]}%"""
+    else:
+        weather_str = ""
 
 # Iterate over our cameras
 for ip, name in config['cameras'].items():
@@ -74,13 +140,18 @@ for ip, name in config['cameras'].items():
         pic_path = os.path.join(script_dir, "pics", name, f"{pic_idx:04}.jpg")
         r = download_pic(ip, pic_path)
         if r.status_code == 200:
+            img_data = r.content
+
+            if weather is not None:
+                img_data = add_weather_text(BytesIO(img_data), weather_str)
+        
             # If it was successful, write it out to the appropriate minute-file
             # We do our cropping here, once.
             filters_str = ""
             if filters:
                 filters_str = "-vf " + ",".join(filters)
             p = subprocess.Popen(f"{ffmpeg} {ffmpeg_common_args} -i pipe: {filters_str} -q:v 6 {pic_path}", stdin=subprocess.PIPE, shell=True)
-            p.communicate(input=r.content)
+            p.communicate(input=img_data)
 
             # use ffmpeg to write it out
             live_pic_path = os.path.join(livedir, f"{name}.jpg")
