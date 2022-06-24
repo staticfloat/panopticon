@@ -67,6 +67,7 @@ def download_pic(ip, pic_path):
     return r
 
 def get_weather_data():
+    # First, hit our weather data cache:
     print(f"Fetching weather data...")
     sys.stdout.flush()
     r = None
@@ -80,7 +81,6 @@ def get_weather_data():
                     'lat': '32.563139',
                     # Elliot's openweather API key
                     'appid': '688d18df8179a6630f40bf04bae931d2',
-                    # METRIC SUPERIORITY!!!!
                     'units': 'imperial',
                 },
             )
@@ -96,7 +96,7 @@ def get_weather_data():
 
 def add_weather_text(img_data, weather_str):
     img = Image.open(img_data)
-    draw = ImageDraw.Draw(img)
+    draw = ImageDraw.Draw(img, "RGBA")
     text_width, text_height = draw.textsize(weather_str, font=font)
     img_width = img.size[0]
     img_height = img.size[1]
@@ -108,8 +108,26 @@ def add_weather_text(img_data, weather_str):
         img_width_off = crop["start_x"]
         img_height_off = crop["start_y"]
 
+    text_coords = (
+        img_width/2 - text_width/2 + img_width_off,
+        img_height  - text_height  + img_height_off,
+    )
+    padding_width = 20
+    padding_height = 2
+    rect_coords = (
+        text_coords[0] - padding_width,
+        text_coords[1] - padding_height,
+        text_coords[0] + text_width + padding_width,
+        text_coords[1] + text_height + padding_height,
+    )
+
+    # Transparent black rectangle
+    draw.rectangle(
+        rect_coords,
+        fill=(0,0,0,160),
+    )
     draw.text(
-        (img_width/2 - text_width/2 + img_width_off, img_height - text_height + img_height_off),
+        text_coords,
         weather_str,
         fill=(255,255,255),
         font=font,
@@ -118,15 +136,57 @@ def add_weather_text(img_data, weather_str):
     img.save(img_byte_arr, format='JPEG')
     return img_byte_arr.getbuffer()
 
+def deg_to_direction(deg):
+    if deg < 11.25:
+        return "N"
+    elif deg < 33.75:
+        return "NNE"
+    elif deg < 56.25:
+        return "NE"
+    elif deg < 78.75:
+        return "ENE"
+    elif deg < 101.25:
+        return "E"
+    elif deg < 123.75:
+        return "ESE"
+    elif deg < 146.25:
+        return "SE"
+    elif deg < 168.75:
+        return "SSE"
+    elif deg < 191.25:
+        return "S"
+    elif deg < 213.75:
+        return "SSW"
+    elif deg < 236.25:
+        return "SW"
+    elif deg < 258.75:
+        return "WSW"
+    elif deg < 281.25:
+        return "W"
+    elif deg < 303.75:
+        return "WNW"
+    elif deg < 326.25:
+        return "NW"
+    elif deg < 348.75:
+        return "NNW"
+    else:
+        return "N"
+
+
 # If weather info is set up, fetch it and add in!
 if weather is not None:
-    font_size = weather.get('font_size', 60)
-    font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size)
+    font_size = weather.get('font_size', 70)
+    font_path = os.path.join(script_dir, "dist", "fonts", "ocrb-regular.ttf")
+    font = ImageFont.truetype(font_path, font_size)
 
     weather_data = get_weather_data()
     if weather_data.status_code == 200:
         weather_data = weather_data.json()
-        weather_str = f"""{weather_data["main"]["temp"]:.1f}°  {weather_data["wind"]["speed"]:.2f} mph @ {weather_data["wind"]["deg"]}°  {weather_data["main"]["humidity"]}%"""
+        temp = weather_data["main"]["temp"]
+        wind_speed = weather_data["wind"]["speed"]
+        wind_dir = deg_to_direction(weather_data["wind"]["deg"])
+        humidity = weather_data["main"]["humidity"]
+        weather_str = f"{temp:3.0f}°F {wind_speed:3.0f} mph {wind_dir} {humidity:3}%RH "
     else:
         weather_str = ""
 
