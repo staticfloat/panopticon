@@ -22,6 +22,24 @@ config = {
         # This means that the video image size will be 1/2 of its original size
         "resolution_divisor": "2",
     },
+    # Crop amounts, in pixels
+    "crop_amount" : {
+        "start_x": 235,
+        "start_y": 0,
+        "width": 3080,
+        "height": 1552,
+    },
+
+    # Automatic weather-fetching
+    "weather": {
+        # The ranch, as identified by Google Maps
+        "lat": "1.23456",
+        "lon": "-7.8910",
+        # An access key for openweathermap.com
+        "key": "00000000000000000000000000000000",
+        "font_size": 70,
+    },
+
     # Location the pictures get uploaded to
     "rsync_dest": "foo@host.com:/prefix/",
 
