@@ -6,12 +6,12 @@ from requests.auth import HTTPDigestAuth
 
 # The directory that contains this script
 script_dir = os.path.dirname(os.path.realpath(__file__))
-ffmpeg = os.path.join(script_dir, "dist", "bin", "ffmpeg")
 
 # Load our config object
-exec(open(os.path.join(script_dir, "config", "config.py")).read())
+exec(open(os.path.join(script_dir, "config.py")).read())
 cameras = config['cameras']
 camera_auth = HTTPDigestAuth(config['camera_auth']['username'], config['camera_auth']['password'])
+pics_dir = config['pics_dir']
 rsync_dest = config['rsync_dest']
 resolution_divisor = config['small_quality']['resolution_divisor']
 jpeg_quality = config['small_quality']['jpeg_quality']
@@ -29,7 +29,7 @@ if crop is not None:
 ffmpeg_common_args = "-y -hide_banner -loglevel error"
 
 # Ensure the `live` directory exists
-livedir = os.path.join(script_dir, "pics", "live")
+livedir = os.path.join(pics_dir, "live")
 os.makedirs(livedir, exist_ok=True)
 
 # We're going to name our pictures as `pics/{name}/{pic_idx}.jpg`, where `pic_idx`
@@ -193,11 +193,11 @@ if weather is not None:
 # Iterate over our cameras
 for ip, name in config['cameras'].items():
     # Ensure that we have a `pics/{name}` directory to store historical data within
-    camdir = os.path.join(script_dir, "pics", name)
+    camdir = os.path.join(pics_dir, name)
     os.makedirs(camdir, exist_ok=True)
 
     try:
-        pic_path = os.path.join(script_dir, "pics", name, f"{pic_idx:04}.jpg")
+        pic_path = os.path.join(pics_dir, name, f"{pic_idx:04}.jpg")
         r = download_pic(ip, pic_path)
         if r.status_code == 200:
             img_data = r.content
@@ -210,19 +210,19 @@ for ip, name in config['cameras'].items():
             filters_str = ""
             if filters:
                 filters_str = "-vf " + ",".join(filters)
-            p = subprocess.Popen(f"{ffmpeg} {ffmpeg_common_args} -i pipe: {filters_str} -q:v 6 {pic_path}", stdin=subprocess.PIPE, shell=True)
+            p = subprocess.Popen(f"ffmpeg {ffmpeg_common_args} -i pipe: {filters_str} -q:v 6 {pic_path}", stdin=subprocess.PIPE, shell=True)
             p.communicate(input=img_data)
 
             # use ffmpeg to write it out
             live_pic_path = os.path.join(livedir, f"{name}.jpg")
-            background_processes += [subprocess.Popen(f"{ffmpeg} {ffmpeg_common_args} -i {pic_path} -q:v {jpeg_quality} {live_pic_path}", shell=True)]
+            background_processes += [subprocess.Popen(f"ffmpeg {ffmpeg_common_args} -i {pic_path} -q:v {jpeg_quality} {live_pic_path}", shell=True)]
 
             # Next, spawn off `ffmpeg` to resize it to a "small" variant
             live_small_path = os.path.join(livedir, f"{name}-small.jpg")
-            background_processes += [subprocess.Popen(f"{ffmpeg} {ffmpeg_common_args} -i {pic_path} -vf scale=iw/{resolution_divisor}:-1 -q:v {jpeg_quality} {live_small_path}", shell=True)]
+            background_processes += [subprocess.Popen(f"ffmpeg {ffmpeg_common_args} -i {pic_path} -vf scale=iw/{resolution_divisor}:-1 -q:v {jpeg_quality} {live_small_path}", shell=True)]
     except:
         print(f"Fetching of {name} from {ip} failed, copying last image!")
-        last_pic_path = os.path.join(script_dir, "pics", name, f"{last_pic_idx:04}.jpg")
+        last_pic_path = os.path.join(pics_dir, name, f"{last_pic_idx:04}.jpg")
         shutil.copyfile(last_pic_path, pic_path)
         traceback.print_exc()
 sys.stdout.flush()
@@ -231,8 +231,3 @@ sys.stdout.flush()
 for p in background_processes:
     p.wait()
 
-# Write the `live` directory up
-print("Uploading to %s"%(rsync_dest))
-sys.stdout.flush()
-ssh_key = os.path.join(script_dir, "config", "id_rsa")
-os.system(f"rsync -e 'ssh -i {ssh_key}' -a {livedir}/* {rsync_dest}")

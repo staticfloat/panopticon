@@ -3,8 +3,8 @@ Description=Panopticon upload
 
 [Service]
 Type=oneshot
-ExecStart=${PYTHON} ${SRCDIR}/panopticon_upload.py
-WorkingDirectory=${SRCDIR}
+ExecStart=/usr/bin/python3 /home/panopticon/panopticon/panopticon_upload.py
+WorkingDirectory=/home/panopticon/panopticon
 
 # If we take more than 5m to run, kill it
 #RuntimeMaxSec=300

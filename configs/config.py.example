@@ -1,0 +1,36 @@
+config = {
+    # Mapping of camera IP address to human-readable name
+    "cameras": {
+        "192.168.255.1": "cam1",
+    },
+    # Username/password for each camera
+    "camera_auth": {
+        "username": "admin",
+        "password": "foo",
+    },
+    # Define small image size and quality level
+    "small_quality" : {
+        # This means that the preview image size will be 1/4th of its original size
+        "resolution_divisor": "4",
+        # This number goes from 1-31, 31 means worst quality
+        "jpeg_quality": "6",
+    },
+    "video_quality" : {
+        # Sets the 'Constant Rate Factor', a value from 0-51, where lower numbers are better.
+        # Experimentally, 20-25 seem good choices, we choose 23 as a relatively good bitrate.
+        "x264_quality": "23",
+        # This means that the video image size will be 1/2 of its original size
+        "resolution_divisor": "2",
+    },
+    # Location the pictures get uploaded to
+    "rsync_dest": "foo@host.com:/prefix/",
+
+    # To create this key, do something like:
+    #   ssh-keygen -t ed25519 -f ssh -N '' && mv ssh ssh.key
+    "rsync_key": "ssh.key",
+
+    # On the server side, make sure that:
+    #  - In your `.ssh/authorized_keys` file, you have lines such as:
+    #      command="rrsync /path/to/upload" ssh-ed25519 AAAAC3...
+    #  - Your upload path is owned by the upload user
+}

@@ -1,0 +1,4 @@
+pi-gen/
+build/
+.vscode/
+*.img

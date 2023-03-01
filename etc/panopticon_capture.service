@@ -1,0 +1,11 @@
+[Unit]
+Description=Panopticon image capture
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /home/panopticon/panopticon/panopticon_capture.py
+ExecStartPost=/bin/systemctl --user start panopticon_upload.service
+WorkingDirectory=/home/panopticon/panopticon
+
+# If we take more than 45s to run, consider it failed
+#RuntimeMaxSec=45
