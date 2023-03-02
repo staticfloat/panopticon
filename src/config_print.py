@@ -16,4 +16,6 @@ else:
 with open(config_path) as infile:
     exec(infile.read())
 
-print(config[prop_name])
+for prop in prop_name.split("."):
+    config = config[prop]
+print(config)

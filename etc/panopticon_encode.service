@@ -4,7 +4,7 @@ Description=Panopticon video encoder
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/python3 /home/panopticon/panopticon/panopticon_encode.py
-ExecStartPost=/bin/systemctl start panopticon_upload.service
+ExecStartPost=/bin/systemctl --user start panopticon_upload.service
 WorkingDirectory=/home/panopticon/panopticon
 
 # If we take more than 10m to run, consider it failed

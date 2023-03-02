@@ -2,7 +2,6 @@ import os, datetime, tempfile
 
 # The directory that contains this script
 script_dir = os.path.dirname(os.path.realpath(__file__))
-livedir = os.path.join(script_dir, "pics", "live")
 
 # Once per hour, we will take the last hours' worth of images, and convert it into 5s of video
 last_hour = (datetime.datetime.now() - datetime.timedelta(hours=1)).hour
@@ -10,11 +9,13 @@ last_hour = (datetime.datetime.now() - datetime.timedelta(hours=1)).hour
 # Load our config object
 exec(open(os.path.join(script_dir, "config.py")).read())
 cameras = config['cameras']
+pics_dir = config['pics_dir']
+livedir = os.path.join(pics_dir, "live")
 resolution_divisor = config['video_quality']['resolution_divisor']
 video_quality = config['video_quality']['x264_quality']
 
 for ip, name in config['cameras'].items():
-    camdir = os.path.join(script_dir, "pics", name)
+    camdir = os.path.join(pics_dir, name)
 
     # Convert the past hour's worth of pictures
     print(f"Encoding last hour of {name}")

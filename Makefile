@@ -70,10 +70,8 @@ build/bootstrap-staging-$(1) build/bootstrap-tftp-$(1):
 	@mkdir -p $$@
 
 build/bootstrap-staging-$(1)/bootstrap.sh: bootstrap.sh | build/bootstrap-staging-$(1)
-	@IMG_NAME="$(IMG_NAME)" \
-	STATIC_IP_ADDR="$$(shell python3 ./src/config_print.py ./configs/$(1)/config.py static_ip 2>/dev/null || true)" \
-	RSYNC_DEST_ADDR="$$(shell python3 ./src/config_print.py ./configs/$(1)/config.py rsync_dest)" \
-	envsubst '$$$${IMG_NAME} $$$${STATIC_IP_ADDR} $$$${RSYNC_DEST_ADDR}' <bootstrap.sh >"$$@"
+	@CONFIG_NAME="$(1)" \
+	envsubst '$$$${CONFIG_NAME}' <bootstrap.sh >"$$@"
 	@chmod +x "$$@"
 
 build/bootstrap-staging-$(1)/src build/bootstrap-staging-$(1)/share build/bootstrap-staging-$(1)/etc: | build/bootstrap-staging-$(1)
@@ -102,6 +100,7 @@ build/$(IMG_NAME)-$(IMG_VERSION)-$(1).img: build/bootstrap-tftp-$(1)/bootstrap.t
 	$$(call qemu_run,$$@,/usr/lib/qemu_customize,build/bootstrap-tftp-$(1))
 
 customize-$(1): build/$(IMG_NAME)-$(IMG_VERSION)-$(1).img
+customize-all: customize-$(1)
 
 debug-$(1): build/$(IMG_NAME)-$(IMG_VERSION)-$(1).img
 	$$(call qemu_run,build/$(IMG_NAME)-$(IMG_VERSION)-$(1).img,/bin/bash)
@@ -115,10 +114,14 @@ cleanall: clean-image-$(1)
 clean: clean-image-$(1)
 endef
 
-$(eval $(call bootstrap_builder,eeville))
+CONFIGS := $(notdir $(patsubst %/,%,$(sort $(dir $(wildcard configs/*/config.py)))))
+$(foreach CONFIG,$(CONFIGS),$(eval $(call bootstrap_builder,$(CONFIG))))
 
 cleanall:
 	rm -rf build
 	sudo bash -c "source pi-gen/scripts/common && unmount pi-gen/work"
 	sudo rm -rf pi-gen/work
 	sudo rm -rf pi-gen/deploy
+
+print-%:
+	@echo "$*=$($*)"
