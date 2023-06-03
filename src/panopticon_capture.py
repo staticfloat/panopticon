@@ -176,7 +176,7 @@ def deg_to_direction(deg):
 # If weather info is set up, fetch it and add in!
 if weather is not None:
     font_size = weather.get('font_size', 70)
-    font_path = os.path.join(script_dir, "dist", "fonts", "ocrb-regular.ttf")
+    font_path = os.path.join(script_dir, "share", "ocrb-regular.ttf")
     font = ImageFont.truetype(font_path, font_size)
 
     weather_data = get_weather_data()

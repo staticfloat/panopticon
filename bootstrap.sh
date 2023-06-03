@@ -52,6 +52,7 @@ fi
 mkdir -p "${INSTALL_DIR}"
 cp -a ${SCRIPT_DIR}/src/*.py "${INSTALL_DIR}/"
 cp -a ${SCRIPT_DIR}/config/* "${INSTALL_DIR}/"
+cp -a ${SCRIPT_DIR}/share "${INSTALL_DIR}/"
 chmod +x ${INSTALL_DIR}/*.py
 chown "${USER}:${USER}" -R "${INSTALL_DIR}"
 
